@@ -1,14 +1,11 @@
-#from pytorch_transformers.modeling_bert import BertPreTrainedModel, BertConfig, BertModel
-#from pytorch_transformers.modeling_utils import WEIGHTS_NAME, CONFIG_NAME
-#from pytorch_transformers.tokenization_bert import BertTokenizer
-
 from transformers import CONFIG_NAME, WEIGHTS_NAME
 
-from transformers.modeling_bert import BertConfig
-from transformers.tokenization_bert import BertTokenizer
+#from transformers.modeling_bert import BertConfig
+from transformers import BertConfig, BertTokenizer, DistilBertConfig, DistilBertTokenizer
+#from transformers.tokenization_bert import BertTokenizer
 
-from transformers.modeling_distilbert import DistilBertConfig
-from transformers.tokenization_distilbert import DistilBertTokenizer
+#from transformers.modeling_distilbert import DistilBertConfig
+#from transformers.tokenization_distilbert import DistilBertTokenizer
 
 from torch import nn
 import torch,math,logging,os
@@ -215,7 +212,7 @@ class BertForDocumentClassification():
             document_representations = document_representations[permutation]
             document_sequence_lengths = document_sequence_lengths[permutation]
             correct_output = correct_output[permutation]
-
+            print('epoch:{}'.format(epoch))
             self.epoch = epoch
             epoch_loss = 0.0
             for i in range(0, document_representations.shape[0], self.args['batch_size']):

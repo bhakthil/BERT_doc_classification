@@ -1,8 +1,8 @@
 from pkg_resources import resource_exists, resource_listdir, resource_string, resource_stream,resource_filename
 import xml.etree.ElementTree as ET
-import numpy
+import numpy as np
 from sklearn.datasets import fetch_20newsgroups
-
+import pandas as pd
 
 def load_n2c2_2006_train_dev_split():
     train = list(load_n2c2_2006(partition='train'))
@@ -176,4 +176,76 @@ def generator_newstest( data, target_names   ):
 
 
 
+def load_polarity_for_torch( file_name_training, file_name_validation, file_name_test, rows=0):
 
+    # Load data
+    if(rows==0):
+        train_df = pd.read_csv(file_name_training, index_col=False, sep='\t')
+        print(train_df.shape)
+        validate_df = pd.read_csv(file_name_validation, index_col=False, sep='\t')
+        print(validate_df.shape)
+        test_df = pd.read_csv(file_name_test, index_col=False, sep='\t')
+        print(test_df.shape)
+        
+    else:
+        train_df = pd.read_csv(file_name_training, index_col=False, sep='\t',nrows=rows)
+        print(train_df.shape)
+        validate_df = pd.read_csv(file_name_validation, index_col=False, sep='\t',nrows=rows)
+        print(validate_df.shape)
+        test_df = pd.read_csv(file_name_test, index_col=False, sep='\t',nrows=rows)
+        print(test_df.shape)
+        
+
+    train_X1 = train_df['title'].tolist()
+    train_X2 = train_df['content'].tolist()
+    train_y = np.asarray(pd.get_dummies(train_df.polarity), dtype = np.int8)
+
+    validate_X1 = validate_df['title'].tolist()
+    validate_X2 = validate_df['content'].tolist()
+    validate_y = np.asarray(pd.get_dummies(validate_df.polarity), dtype = np.int8)
+
+    test_X1 = test_df['title'].tolist()
+    test_X2 = test_df['content'].tolist()
+    test_y = np.asarray(pd.get_dummies(test_df.polarity), dtype = np.int8)
+    return train_X1, train_X2, train_y, validate_X1, validate_X2, validate_y, test_X1, test_X2, test_y
+
+def load_polarity_for_tf( file_name_training, file_name_validation, file_name_test, rows=0):
+
+    # Load data
+    if(rows==0):
+        train_df = pd.read_csv(file_name_training, index_col=False, sep='\t')
+        print(train_df.shape)
+        validate_df = pd.read_csv(file_name_validation, index_col=False, sep='\t')
+        print(validate_df.shape)
+        test_df = pd.read_csv(file_name_test, index_col=False, sep='\t')
+        print(test_df.shape)
+        
+    else:
+        train_df = pd.read_csv(file_name_training, index_col=False, sep='\t',nrows=rows)
+        print(train_df.shape)
+        validate_df = pd.read_csv(file_name_validation, index_col=False, sep='\t',nrows=rows)
+        print(validate_df.shape)
+        test_df = pd.read_csv(file_name_test, index_col=False, sep='\t',nrows=rows)
+        print(test_df.shape)
+        
+
+    train_X1 = train_df['title'].tolist()
+    train_X1 = np.array(train_X1, dtype=object)[:, np.newaxis]
+    train_X2 = train_df['content'].tolist()
+    train_X2 = np.array(train_X2, dtype=object)[:, np.newaxis]
+    train_y = np.asarray(pd.get_dummies(train_df.polarity), dtype = np.int8)
+
+    validate_X1 = validate_df['title'].tolist()
+    validate_X1 = np.array(validate_X1, dtype=object)[:, np.newaxis]
+    validate_X2 = validate_df['content'].tolist()
+    validate_X2 = np.array(validate_X2, dtype=object)[:, np.newaxis]
+    validate_y = np.asarray(pd.get_dummies(validate_df.polarity), dtype = np.int8)
+
+    test_X1 = test_df['title'].tolist()
+    test_X1 = np.array(test_X1, dtype=object)[:, np.newaxis]
+    test_X2 = test_df['content'].tolist()
+    test_X2 = np.array(test_X2, dtype=object)[:, np.newaxis]
+    test_y = np.asarray(pd.get_dummies(test_df.polarity), dtype = np.int8)
+
+
+    return train_X1, train_X2, train_y, validate_X1, validate_X2, validate_y, test_X1, test_X2, test_y

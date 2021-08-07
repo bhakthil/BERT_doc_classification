@@ -1,6 +1,6 @@
 #from pytorch_transformers.modeling_bert import BertPreTrainedModel, BertConfig, BertModel
-from transformers.modeling_bert import BertPreTrainedModel, BertConfig, BertModel
-from transformers.modeling_distilbert import DistilBertPreTrainedModel, DistilBertConfig, DistilBertModel
+from transformers import BertPreTrainedModel, BertConfig, BertModel
+from transformers import DistilBertPreTrainedModel, DistilBertConfig, DistilBertModel
 
 from torch import nn
 import torch
