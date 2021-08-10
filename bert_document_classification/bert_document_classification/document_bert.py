@@ -6,7 +6,8 @@ from transformers import BertConfig, BertTokenizer, DistilBertConfig, DistilBert
 
 #from transformers.modeling_distilbert import DistilBertConfig
 #from transformers.tokenization_distilbert import DistilBertTokenizer
-
+from tqdm import tqdm
+from tqdm.auto import trange
 from torch import nn
 import torch,math,logging,os
 from sklearn.metrics import f1_score, precision_score, recall_score
@@ -206,7 +207,7 @@ class BertForDocumentClassification():
             #self.bert_doc_classification = torch.nn.DataParallel(self.bert_doc_classification)
         self.bert_doc_classification.to(device=self.args['device'])
 
-        for epoch in range(1,self.args['epochs']+1):
+        for epoch in trange(1,self.args['epochs']+1):
             # shuffle
             permutation = torch.randperm(document_representations.shape[0])
             document_representations = document_representations[permutation]
@@ -215,7 +216,7 @@ class BertForDocumentClassification():
             print('epoch:{}'.format(epoch))
             self.epoch = epoch
             epoch_loss = 0.0
-            for i in range(0, document_representations.shape[0], self.args['batch_size']):
+            for i in trange(0, document_representations.shape[0], self.args['batch_size']):
 
                 batch_document_tensors = document_representations[i:i + self.args['batch_size']].to(device=self.args['device'])
                 batch_document_sequence_lengths= document_sequence_lengths[i:i+self.args['batch_size']]

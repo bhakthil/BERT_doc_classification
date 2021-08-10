@@ -1,15 +1,15 @@
-import sys, os, logging, torch, time, configargparse, socket
+import sys, os, logging, torch, time, configargparse, socket, shutil
 
 #appends current directory to sys path allowing data imports.
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append('/home/bhakthi/projects/BERT_doc_classification/bert_document_classification')
+sys.path.append('/home/azureuser/projects/BERT_doc_classification/bert_document_classification')
 
-from examples.ml4health_2019_replication.data import load_polarity_for_torch
+from data import load_polarity_for_torch
 from bert_document_classification.document_bert import BertForDocumentClassification
 
 log = logging.getLogger()
 
-def _initialize_arguments(p: configargparse.ArgParser):
+def _initialize_arguments(p: configargparse.ArgParser, architecture='DocumentBertMaxPool', model_name='bert-base-uncased'):
     p.add('--model_storage_directory', help='The directory caching all model runs')
     p.add('--bert_model_path', help='Model path to BERT')
     p.add('--labels', help='Numbers of labels to predict over', type=str)
@@ -32,13 +32,27 @@ def _initialize_arguments(p: configargparse.ArgParser):
     p.add('--timestamp', help='Run specific signature')
     p.add('--model_directory', help='The directory storing this model run, a sub-directory of model_storage_directory')
     p.add('--use_tensorboard', help='Use tensorboard logging', type=bool)
+
+    # clean dirs
+    p.add('--clean_run')
     args = p.parse_args()
 
     args.labels = [x for x in args.labels.split(', ')]
 
+    # Change model storage dir
+    args.architecture = architecture
+    args.model_storage_directory = './results_{}'.format(architecture.lower())
+    args.bert_model_path = model_name
+
     #Set run specific envirorment configurations
+
     args.timestamp = time.strftime("run_%Y_%m_%d_%H_%M_%S") + "_{machine}".format(machine=socket.gethostname())
     args.model_directory = os.path.join(args.model_storage_directory, args.timestamp) #directory
+    if(args.clean_run=='True'):
+        try:
+            shutil.rmtree(args.model_storage_directory)
+        except OSError as e:
+            print("Error: %s : %s" % (args.model_storage_directory, e.strerror))
     os.makedirs(args.model_directory, exist_ok=True)
 
     #Handle logging configurations
@@ -71,41 +85,25 @@ def _initialize_arguments(p: configargparse.ArgParser):
 
 
 if __name__ == "__main__":
-    p = configargparse.ArgParser(default_config_files=["/home/bhakthi/projects/BERT_doc_classification/bert_document_classification/polarity_train_config.ini"])
-    args = _initialize_arguments(p)
-
     torch.cuda.empty_cache()
-    base_data_path = '/home/bhakthi/projects/polarity'
+    base_data_path = '/home/azureuser/cloudfiles/code/Users/bhakthil'
     train_title, train_content, train_labels, \
     validate_title, validate_content, validate_labels,\
     test_title, test_content, test_labels =  load_polarity_for_torch(os.path.join(base_data_path, 'articles_train.tsv'),
 														os.path.join(base_data_path, 'articles_validate.tsv'),
-              											os.path.join(base_data_path, 'articles_test.tsv'),
-														rows=1000)  
+              											os.path.join(base_data_path, 'articles_test.tsv'))  
 
-    # data_train, data_test, target_names =load_newstest( categories=args.labels )
-    # train=generator_newstest( data_train, target_names )
-    # dev=generator_newstest( data_test, target_names )
-    
-    # train_documents, train_labels = [],[]
-    # for _, text, status in train:
-    #     train_documents.append(text)
-    #     label = [0]*len(args.labels)
-    #     for idx, name in enumerate(args.labels):
-    #         if name == status:
-    #             label[idx] = 1
-    #     train_labels.append(label)
+    document_bert_architectures = [
+    {'architectuer':'DocumentBertLSTM', 'model':'bert-base-uncased'},
+    {'architectuer':'DocumentDistilBertLSTM','model':'distilbert-base-uncased'},
+    {'architectuer':'DocumentBertTransformer','model':'bert-base-uncased'},
+    {'architectuer':'DocumentBertLinear','model':'bert-base-uncased'},
+    {'architectuer':'DocumentBertMaxPool','model':'bert-base-uncased'}]
 
-    # dev_documents, dev_labels = [],[]
-    # for _, text, status in dev:
-    #     dev_documents.append(text)
-    #     label = [0]*len(args.labels)
-    #     for idx, name in enumerate(args.labels):
-    #         if name == status:
-    #             label[idx] = 1
-    #     dev_labels.append(label)
+    for architecture in document_bert_architectures:
+        p = configargparse.ArgParser(default_config_files=["/home/azureuser/projects/BERT_doc_classification/bert_document_classification/polarity_train_config.ini"])
+        args = _initialize_arguments(p, architecture=architecture['architectuer'], model_name=architecture['model'])
+        model = BertForDocumentClassification(args=args)
+        model.fit((train_content, train_labels), (validate_content,validate_labels))
 
-    model = BertForDocumentClassification(args=args)
-    model.fit((train_content, train_labels), (validate_content,validate_labels))
-    
     
